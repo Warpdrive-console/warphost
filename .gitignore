@@ -7,6 +7,8 @@
 *.dll
 *.so
 *.dylib
+# the actual built binary
+warpdrive
 
 # Test binary, built with `go test -c`
 *.test
@@ -29,4 +31,4 @@ go.work.sum
 
 # Editor/IDE
 # .idea/
-# .vscode/
+.vscode/
