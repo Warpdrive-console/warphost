@@ -18,7 +18,8 @@ func main() {
 	r.GET("/bluetooth/devices", bluetoothDevices)
 
 	r.GET("/bluetooth/connect/:mac", bluetoothConnect)
-	r.GET("/bluetooth/disconnect/:mac", bluetoothConnect)
+	r.GET("/bluetooth/disconnect/:mac", bluetoothDisconnect)
+	r.GET("/bluetooth/forget/:mac", bluetoothForget)
 
 	r.GET("/bluetooth/scan/resume", bluetoothResume)
 	r.GET("/bluetooth/scan/pause", bluetoothPause)

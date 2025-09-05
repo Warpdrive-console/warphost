@@ -311,3 +311,17 @@ func bluetoothDisconnect(c *gin.Context) {
 
 	c.JSON(200, gin.H{"status": "Disconnected"})
 }
+
+func bluetoothForget(c *gin.Context) {
+	mac := c.Param("mac")
+
+	forget := exec.Command("bluetoothctl", "remove", mac)
+	err := forget.Run()
+
+	if err != nil {
+		c.JSON(200, gin.H{"error": "Failed to forget device"})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": "Forgotten"})
+}
