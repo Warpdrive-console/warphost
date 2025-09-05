@@ -181,8 +181,7 @@ func bluetoothScan(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"count":     len(cache.devices),
-		"deviceMap": cache.devices,
-		"devices":   devices,
+		"devices":   cache.devices,
 		"paused":    scanner.IsPaused(),
 	})
 }
