@@ -14,7 +14,12 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
+	r.GET("/bluetooth/scan", bluetoothScan)
 	r.GET("/bluetooth/devices", bluetoothDevices)
+
+	r.GET("/bluetooth/connect/:mac", bluetoothConnect)
+	r.GET("/bluetooth/disconnect/:mac", bluetoothConnect)
+
 	r.GET("/bluetooth/scan/resume", bluetoothResume)
 	r.GET("/bluetooth/scan/pause", bluetoothPause)
 	r.GET("/bluetooth/scan/status", bluetoothStatus)

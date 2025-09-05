@@ -114,9 +114,9 @@ func (bs *BluetoothScanner) Start(ctx context.Context) error {
 			cmd := parts[1]
 			s := cmdre.FindStringSubmatch(cmd)
 			
-			if s != nil && len(s) > 0 && s[0] == "NEW" {
+			if len(s) > 0 && s[0] == "NEW" {
 				m := re.FindStringSubmatch(line)
-				if m != nil && len(m) > 2 {
+				if len(m) > 2 {
 					fmt.Println("got new device")
 					mac := strings.ToUpper(m[1])
 					name := strings.TrimSpace(m[2])
@@ -166,7 +166,7 @@ func startBluetoothScanner(ctx context.Context) error {
 	return scanner.Start(ctx)
 }
 
-func bluetoothDevices(c *gin.Context) {
+func bluetoothScan(c *gin.Context) {
 	cache.RLock()
 	defer cache.RUnlock()
 
@@ -182,11 +182,41 @@ func bluetoothDevices(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"count":     len(cache.devices),
 		"deviceMap": cache.devices,
-		"macList":   macList,
-		"nameList":  nameList,
 		"devices":   devices,
 		"paused":    scanner.IsPaused(),
 	})
+}
+
+func bluetoothDevices(c *gin.Context) {
+	connected := exec.Command("bluetoothctl", "devices", "Connected")
+
+	stdout, err := connected.StdoutPipe()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to get stdout"})
+		return
+	}
+
+	err = connected.Start()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to get devices"})
+		return
+	}
+
+	output, err := io.ReadAll(stdout)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err})
+		return
+	}
+
+	if err := connected.Wait(); err != nil {
+		c.JSON(400, gin.H{"error": "Failed to wait for the command"})
+		return
+	}
+
+	re := regexp.MustCompile(`Device\s+([0-9A-Fa-f:]{17})\s+(.+)$`)
+	matches := re.FindStringSubmatch
+
+	c.String(200, string(output))
 }
 
 func bluetoothPause(c *gin.Context) {
@@ -194,7 +224,7 @@ func bluetoothPause(c *gin.Context) {
 		scanner.Pause()
 		c.JSON(200, gin.H{"status": "paused"})
 	} else {
-		c.JSON(400, gin.H{"error": "scanner not initialized"})
+		c.JSON(400, gin.H{"error": "Scanner not initialized"})
 	}
 }
 
@@ -203,7 +233,7 @@ func bluetoothResume(c *gin.Context) {
 		scanner.Resume()
 		c.JSON(200, gin.H{"status": "resumed"})
 	} else {
-		c.JSON(400, gin.H{"error": "scanner not initialized"})
+		c.JSON(400, gin.H{"error": "Scanner not initialized"})
 	}
 }
 
@@ -221,4 +251,44 @@ func bluetoothStatus(c *gin.Context) {
 	} else {
 		c.JSON(400, gin.H{"error": "scanner not initialized"})
 	}
+}
+
+func bluetoothConnect(c *gin.Context) {
+	mac := c.Param("mac")
+
+	pair := exec.Command("bluetoothctl", "pair", mac)
+	err := pair.Run()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to pair device"})
+		return
+	}
+
+	trust := exec.Command("bluetoothctl", "trust", mac)
+	err = trust.Run()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to trust device"})
+		return
+	}
+
+	connect := exec.Command("bluetoothctl", "connect", mac)
+	err = connect.Run()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to connect device"})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": "connected"})
+}
+
+func bluetoothDisconnect(c *gin.Context) {
+	mac := c.Param("mac")
+
+	disconnect := exec.Command("bluetoothctl", "disconnect", mac)
+	err := disconnect.Run()
+	if err != nil {
+		c.JSON(200, gin.H{"error": "Failed to disconnect device"})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": "Disconnected"})
 }
