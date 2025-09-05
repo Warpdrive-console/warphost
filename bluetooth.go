@@ -187,36 +187,55 @@ func bluetoothScan(c *gin.Context) {
 	})
 }
 
-func bluetoothDevices(c *gin.Context) {
-	connected := exec.Command("bluetoothctl", "devices", "Connected")
+func getDevices(command string) map[string]string {
+	connected := exec.Command("bluetoothctl", "devices", command)
+	devices := make(map[string]string)
 
 	stdout, err := connected.StdoutPipe()
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Failed to get stdout"})
-		return
+		return devices
 	}
 
 	err = connected.Start()
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Failed to get devices"})
-		return
+		return devices
 	}
 
 	output, err := io.ReadAll(stdout)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err})
-		return
+		return devices
 	}
 
 	if err := connected.Wait(); err != nil {
-		c.JSON(400, gin.H{"error": "Failed to wait for the command"})
-		return
+		return devices
 	}
 
 	re := regexp.MustCompile(`Device\s+([0-9A-Fa-f:]{17})\s+(.+)$`)
-	matches := re.FindStringSubmatch
 
-	c.String(200, string(output))
+	lines := strings.Split(string(output), "\n")
+
+	for i := 0; i < len(lines); i ++ {
+		line := lines[i]
+		fmt.Println(line)
+		matches := re.FindStringSubmatch(line)
+		if len(matches) > 2 {
+			mac := strings.ToUpper(matches[1])
+			name := strings.TrimSpace(matches[2])
+			fmt.Println(matches)
+			devices[mac] = name
+		}
+	}
+
+	return devices
+}
+
+func bluetoothDevices(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"trusted": getDevices("Trusted"),
+		"paired": getDevices("Paired"),
+		"connected": getDevices("Connected"),
+		"bonded": getDevices("Bonded"),
+	})
 }
 
 func bluetoothPause(c *gin.Context) {
