@@ -4,6 +4,7 @@ Super simple local host based bluetooth and network manager written in go
 
 Existing endpoints are
 
+# Bluetooth
 ```js
 GET /bluetooth/scan
 GET /bluetooth/devices
