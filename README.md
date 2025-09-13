@@ -45,26 +45,31 @@ this should run the server and everything will be awesome :sunglasses:
 The core API allows you to upload, manage, and serve web applications/games:
 
 ### Upload a Game/Web App
+
 ```bash
 curl -X POST -F "file=@mygame.zip" http://127.0.0.1:8080/core/upload
 ```
 
 ### List All Games
+
 ```bash
 curl http://127.0.0.1:8080/core/list
 ```
 
 ### Open a Specific Game
+
 ```bash
 curl "http://127.0.0.1:8080/core/open?id=mygame"
 ```
 
 ### Delete a Game
+
 ```bash
 curl -X DELETE "http://127.0.0.1:8080/core/delete?id=mygame"
 ```
 
 ### Access Game Files
+
 After uploading, games are accessible at: `http://127.0.0.1:8080/games/<game-id>/index.html`
 
 **Note**: Uploaded ZIP files must contain an `index.html` file in the root to be valid.
